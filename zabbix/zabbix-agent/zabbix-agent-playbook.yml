@@ -1,0 +1,34 @@
+---
+- name: Install Zabbix Agent using script
+  hosts: all
+  become: yes
+  vars:
+    zabbix_script_path: /tmp/zabbix-agent-install.sh
+
+  tasks:
+    - name: Copy Zabbix installation script to target servers
+      ansible.builtin.copy:
+        src: zabbix-agent-install.sh
+        dest: "{{ zabbix_script_path }}"
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Execute Zabbix installation script
+      ansible.builtin.command: "{{ zabbix_script_path }}"
+      register: script_output
+      changed_when: "'Installation complete' in script_output.stdout"
+      ignore_errors: yes  # Продолжать даже если скрипт вернет ошибку
+
+    - name: Verify Zabbix Agent is running
+      ansible.builtin.systemd:
+        name: zabbix-agent
+        state: started
+        enabled: yes
+      register: zabbix_service
+      ignore_errors: yes
+
+    - name: Show installation result
+      ansible.builtin.debug:
+        msg: "Zabbix Agent installed and running successfully"
+      when: zabbix_service is succeeded
