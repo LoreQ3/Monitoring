@@ -1,0 +1,27 @@
+[Unit]
+Description=Custom User Metrics Exporter
+Documentation=https://github.com/prometheus/node_exporter
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=custom_exporter
+Group=custom_exporter
+ExecStart=/usr/bin/python3 /usr/local/bin/custom_exporter.py
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=10s
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=custom_exporter
+Environment=PYTHONUNBUFFERED=1
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target
