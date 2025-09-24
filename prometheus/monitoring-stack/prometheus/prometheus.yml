@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - используем имя сервиса из docker-compose
+  - job_name: 'node-exporter'
+    static_configs:
+      # - targets: ['host.docker.internal:9100']  # ← изменили на node_exporter
+      - targets: ['node_exporter:9100']  # ← Docker DNS имя
+      
+  # SNMP Exporter - используем имя сервиса из docker-compose
+  - job_name: 'snmp'
+    static_configs:
+      - targets: 
+        - 192.168.13.247 # Локальная машина
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: host.docker.internal:9116  #  Узнайте IP snmp-exporter: docker inspect snmp-exporter | grep IPAddress
+    scrape_interval: 30s
+
+  - job_name: 'snmp_exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9116']
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+      
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ['alertmanager:9093']
+
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'

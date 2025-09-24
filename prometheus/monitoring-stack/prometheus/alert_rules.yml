@@ -1,0 +1,232 @@
+groups:
+- name: system-alerts
+  rules:
+
+  # Алерты на выключение/доступность машины
+  - alert: InstanceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} is down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+  # Алерты на перегрузку CPU
+  - alert: HighCPUUsage
+    expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: CriticalCPUUsage
+    expr: (100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[2m])) * 100)) > 90
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Алерты на оперативную память
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: CriticalMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 95
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical memory usage on {{ $labels.instance }}"
+      description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Алерты на дисковое пространство
+  - alert: LowDiskSpace
+    expr: (node_filesystem_avail_bytes{mountpoint!~"/run/.*|/sys/.*|/dev/.*|/proc/.*|/var/lib/docker/.*"} / node_filesystem_size_bytes{mountpoint!~"/run/.*|/sys/.*|/dev/.*|/proc/.*|/var/lib/docker/.*"} * 100) < 20
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Low disk space on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+      description: "Disk space is only {{ $value }}% free on {{ $labels.mountpoint }}"
+
+  - alert: CriticalLowDiskSpace
+    expr: (node_filesystem_avail_bytes{mountpoint!~"/run/.*|/sys/.*|/dev/.*|/proc/.*|/var/lib/docker/.*"} / node_filesystem_size_bytes{mountpoint!~"/run/.*|/sys/.*|/dev/.*|/proc/.*|/var/lib/docker/.*"} * 100) < 10
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical disk space on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+      description: "Disk space is only {{ $value }}% free on {{ $labels.mountpoint }}"
+
+  # Алерты на нагрузку системы
+  - alert: HighLoadAverage
+    expr: node_load5 > (count by(instance) (node_cpu_seconds_total{mode="system"}) * 1.5)
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High load average on {{ $labels.instance }}"
+      description: "5-minute load average is {{ $value }} on {{ $labels.instance }}"
+
+  # Алерты на swap память
+  - alert: HighSwapUsage
+    expr: (node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / node_memory_SwapTotal_bytes * 100 > 50
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High swap usage on {{ $labels.instance }}"
+      description: "Swap usage is {{ $value }}% on {{ $labels.instance }}"
+
+  # Алерты на количество процессов
+  - alert: TooManyProcesses
+    expr: node_processes_total > 1000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Too many processes on {{ $labels.instance }}"
+      description: "{{ $value }} processes running on {{ $labels.instance }}"
+
+  # Алерты на user sessions (ваш оригинальный)
+  - alert: TooManyActiveUsers
+    expr: node_active_users_count > 2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Too many active user sessions on {{ $labels.instance }}"
+      description: "Number of active user sessions is {{ $value }}"
+
+  - alert: CriticalUserSessions
+    expr: node_active_users_count > 5
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Critical number of user sessions on {{ $labels.instance }}"
+      description: "Number of active user sessions is critically high: {{ $value }}"
+
+- name: network-alerts
+  rules:
+
+  # Алерты на доступность сетевых устройств
+  - alert: SNMPDeviceDown
+    expr: up{job="snmp"} == 0
+    for: 5s
+    labels:
+      severity: critical
+    annotations:
+      summary: "SNMP device {{ $labels.instance }} is down"
+      description: "SNMP device {{ $labels.instance }} has been unreachable for 2 minutes"
+
+  # Алерты на ошибки интерфейсов
+  - alert: HighNetworkErrors
+    expr: rate(ifInErrors[5m]) > 10 or rate(ifOutErrors[5m]) > 10
+    for: 30s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High network errors on {{ $labels.instance }} ({{ $labels.ifName }})"
+      description: "Network interface {{ $labels.ifName }} on {{ $labels.instance }} has high error rate: {{ $value }}"
+
+  # Алерты на дискарды пакетов
+  - alert: HighPacketDiscards
+    expr: rate(ifInDiscards[5m]) > 100 or rate(ifOutDiscards[5m]) > 100
+    for: 5s
+    labels:
+      severity: warning
+    annotations:
+      summary: "High packet discards on {{ $labels.instance }} ({{ $labels.ifName }})"
+      description: "Network interface {{ $labels.ifName }} on {{ $labels.instance }} has high packet discard rate"
+
+  # Алерты на изменение статуса интерфейса wifi (можно поменять на любой)
+  - alert: WiFiInterfaceDown
+    expr: snmp_ifOperStatus{ifDescr="wlp2s0"} != 1
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "WiFi interface wlp2s0 is down on {{ $labels.instance }}"
+      description: "Interface wlp2s0 on device {{ $labels.instance }} has operational status: {{ $value }} (expected 1=up)"
+
+  # Алерты на высокую нагрузку по пакетам
+  - alert: HighPacketRate
+    expr: rate(ifInUcastPkts[5m]) > 10000 or rate(ifOutUcastPkts[5m]) > 10000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High packet rate on {{ $labels.instance }} ({{ $labels.ifName }})"
+      description: "Network interface {{ $labels.ifName }} on {{ $labels.instance }} has high packet rate: {{ $value }}"
+
+  # Алерты на использование широковещательных пакетов
+  - alert: HighBroadcastTraffic
+    expr: rate(ifInBroadcastPkts[5m]) > 1000 or rate(ifOutBroadcastPkts[5m]) > 1000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High broadcast traffic on {{ $labels.instance }} ({{ $labels.ifName }})"
+      description: "Network interface {{ $labels.ifName }} on {{ $labels.instance }} has high broadcast traffic"
+
+  # Алерты на использование многовещательных пакетов
+  - alert: HighMulticastTraffic
+    expr: rate(ifInMulticastPkts[5m]) > 1000 or rate(ifOutMulticastPkts[5m]) > 1000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High multicast traffic on {{ $labels.instance }} ({{ $labels.ifName }})"
+      description: "Network interface {{ $labels.ifName }} on {{ $labels.instance }} has high multicast traffic"
+
+- name: container-alerts
+  rules:
+  # Алерт на перезапуск контейнера
+  - alert: ContainerRestarted
+    expr: time() - container_started_seconds > 60 and changes(container_started_seconds[15m]) > 2
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Container {{ $labels.name }} restarted multiple times"
+      
+  # Алерт на остановку контейнера
+  - alert: ContainerDown
+    expr: absent(container_memory_usage_bytes{name=~".+"}) == 1
+    for: 2m
+    labels:
+      severity: critical
+      category: containers
+    annotations:
+      summary: "Container {{ $labels.name }} is down or not reporting"
+      description: "Container {{ $labels.name }} has stopped reporting metrics for more than 2 minutes"
+
+  # # Алерт на использование памяти контейнером
+  # - alert: HighContainerMemory
+    # expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.8
+    # for: 5m
+    # labels:
+      # severity: warning
+    # annotations:
+      # summary: "Container {{ $labels.name }} memory usage > 80%"
+
+  # Алерт на использование процессора контейнером
+  - alert: HighContainerCPU
+    expr: rate(container_cpu_usage_seconds_total[5m]) * 100 > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Container {{ $labels.name }} CPU usage > 80%"

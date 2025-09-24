@@ -1,0 +1,28 @@
+{{ define "telegram.message" }}
+{{ if eq .Status "firing" }}
+🚨 <b>Alert Triggered</b>
+{{ else }}
+✅ <b>Alert Resolved</b>
+{{ end }}
+
+<b>Alert:</b> {{ .CommonLabels.alertname }}
+<b>Instance:</b> {{ .CommonLabels.instance }}
+<b>Severity:</b> {{ .CommonLabels.severity }}
+
+{{ if .CommonAnnotations.summary }}
+<b>Summary:</b> {{ .CommonAnnotations.summary }}
+{{ end }}
+
+{{ if .CommonAnnotations.description }}
+<b>Description:</b> {{ .CommonAnnotations.description }}
+{{ end }}
+
+{{ range .Alerts }}
+<b>Started:</b> {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+{{ if .EndsAt }}
+<b>Ended:</b> {{ .EndsAt.Format "2006-01-02 15:04:05" }}
+{{ end }}
+{{ end }}
+
+<b>Dashboard:</b> <a href="http://your-grafana-url/dashboards">View Dashboard</a>
+{{ end }}
