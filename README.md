@@ -1,5 +1,5 @@
 <h1 align="center" style="border-bottom: none">
-    <a href="https://prometheus.io" target="_blank"><img alt="Prometheus" src="https://github.com/LoreQ3/Monitoring/blob/main/img/img4.png"></a><br>Prometheus
+    <a href="https://prometheus.io" target="_blank"><img alt="Prometheus" src="https://github.com/LoreQ3/Monitoring/blob/main/img/img4.png"></a>
 </h1>
 
 Система мониторинга Prometheus+Grafana, развернутая на docker-compose с основными необходимыми экспортерами:
