@@ -1,5 +1,5 @@
 <h1 align="center" style="border-bottom: none">
-    <a href="https://prometheus.io" target="_blank"><img alt="Prometheus" src="/documentation/images/prometheus-logo.svg"></a><br>Prometheus
+    <a href="https://prometheus.io" target="_blank"><img alt="Prometheus" src="https://github.com/LoreQ3/Monitoring/blob/main/img/img4.png"></a><br>Prometheus
 </h1>
 
 Система мониторинга Prometheus+Grafana, развернутая на docker-compose с основными необходимыми экспортерами:
@@ -9,7 +9,9 @@
 
 Оповещения организованы через Alertmanager через Telegram. 
 
-С целью обеспечения безопасности доступ к Grafana организован через сервер nginx.
+Добавлена кастомная метрика количества уникальных пользователей на сервере Linux.
+
+С целью обеспечения безопасности доступ к Grafana организован через сервер Nginx.
 
 Добавлены скрипты с целью выполнения еженедельного бэкапа метрик и логирования.
 
