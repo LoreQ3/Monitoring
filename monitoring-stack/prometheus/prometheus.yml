@@ -42,6 +42,12 @@ scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+
+  - job_name: 'windows'
+    static_configs:
+      - targets: ['192.168.13.234:9182']
+        labels:
+          alias: 'windows-web-server-01' # A helpful alias for Grafana
       
 alerting:
   alertmanagers:
